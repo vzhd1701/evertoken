@@ -19,13 +19,18 @@ func init() {
 }
 
 func main() {
-	var newPath, exbPath, exbPass string
+	var newPath, newSecurePath, exbPath, exbPass string
 	exbBruteStart := int64(-1)
 
 	subcmdNew := flaggy.NewSubcommand("new")
-	subcmdNew.Description = "Extract token from new Evernote app."
+	subcmdNew.Description = "Extract token from modern Evernote app."
 
-	subcmdNew.String(&newPath, "u", "user-dir", "Path to Evernote user config directory. (Optional, use only if you changed it)")
+	subcmdNew.String(&newPath, "u", "user-dir", "Path to Evernote user config directory. (Optional, use only if you moved it)")
+
+	subcmdNewSS := flaggy.NewSubcommand("new-ss")
+	subcmdNewSS.Description = "Extract token directly from Evernote's secure storage file authtoken_user_<userID>."
+
+	subcmdNewSS.AddPositionalValue(&newSecurePath, "ss-file", 1, true, "Path to Evernote secure storage file authtoken_user_<userID>.")
 
 	subcmdLegacy := flaggy.NewSubcommand("legacy")
 	subcmdLegacy.Description = "Extract token from legacy Evernote app."
@@ -38,6 +43,7 @@ func main() {
 	subcmdLegacyEXB.Int64(&exbBruteStart, "b", "brute", "Brute force password start number, use either this or password option.")
 
 	flaggy.AttachSubcommand(subcmdNew, 1)
+	flaggy.AttachSubcommand(subcmdNewSS, 1)
 	flaggy.AttachSubcommand(subcmdLegacy, 1)
 	flaggy.AttachSubcommand(subcmdLegacyEXB, 1)
 
@@ -48,6 +54,8 @@ func main() {
 	switch {
 	case subcmdNew.Used:
 		Users = evernote.NewGetUsers(newPath)
+	case subcmdNewSS.Used:
+		Users = evernote.NewGetSecureUsers(newSecurePath)
 	case subcmdLegacy.Used:
 		Users = evernote.LegacyGetUsers()
 	case subcmdLegacyEXB.Used:

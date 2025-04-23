@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/kirsle/configdir"
@@ -22,13 +25,7 @@ func NewGetUsers(newPath string) (users []types.User) {
 	for _, user := range newListUsers(confDir) {
 		storagePath := filepath.Join(confDir, "secure-storage", "authtoken_user_"+user.ID)
 
-		encData, iv := newGetSecureStorageData(storagePath)
-
-		key := newGetSecureStorageKey(user.ID)
-
-		decryptedData := platform.AESDecrypt(encData, key, iv)
-
-		token := newGetToken(decryptedData)
+		token := getTokenFromSecureStorage(storagePath, user.ID)
 
 		users = append(users, types.User{
 			Path:     storagePath,
@@ -40,6 +37,52 @@ func NewGetUsers(newPath string) (users []types.User) {
 	}
 
 	return
+}
+
+func NewGetSecureUsers(newSecurePath string) (users []types.User) {
+	userID := parseUserID(newSecurePath)
+
+	token := getTokenFromSecureStorage(newSecurePath, userID)
+
+	users = append(users, types.User{
+		Path:     newSecurePath,
+		ID:       userID,
+		UserName: "",
+		Email:    "",
+		Token:    token,
+	})
+
+	return
+}
+
+func parseUserID(filePath string) string {
+	filename := filepath.Base(filePath)
+
+	re := regexp.MustCompile(`^authtoken_user_(\d+)$`)
+
+	match := re.FindStringSubmatch(filename)
+
+	if len(match) != 2 {
+		myerrors.ExpectedFail(fmt.Errorf("secure storage file '%s' does not match the expected format 'authtoken_user_<userID>'", filePath))
+	}
+
+	userID := match[1]
+	_, err := strconv.Atoi(userID)
+	if err != nil {
+		myerrors.ExpectedFail(fmt.Errorf("parsed userID '%s' is not a valid integer: %w", userID, err))
+	}
+
+	return userID
+}
+
+func getTokenFromSecureStorage(storagePath string, userID string) string {
+	encData, iv := newGetSecureStorageData(storagePath)
+
+	key := newGetSecureStorageKey(userID)
+
+	decryptedData := platform.AESDecrypt(encData, key, iv)
+
+	return newGetToken(decryptedData)
 }
 
 func getEvernoteDir(customPath string) string {
