@@ -19,7 +19,7 @@ version_updater.regex_repl = "var version = \"$1\"";
 
 let bumpFiles = [
   {
-    filename: "main.go",
+    filename: "cmd/evertoken/main.go",
     updater: version_updater,
   }
 ]
