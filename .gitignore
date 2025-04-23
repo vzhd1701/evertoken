@@ -3,4 +3,5 @@
 !/.github
 !/.goreleaser.yaml
 !/.versionrc.js
+!/.pre-commit-config.yaml
 dist/
