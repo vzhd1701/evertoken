@@ -1,15 +1,30 @@
 module github.com/vzhd1701/evertoken
 
-go 1.16
+go 1.24
 
 require (
-	github.com/danieljoos/wincred v1.1.0
-	github.com/integrii/flaggy v1.4.4
+	github.com/danieljoos/wincred v1.2.2
+	github.com/integrii/flaggy v1.5.2
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
-	github.com/schollz/progressbar/v3 v3.8.0
-	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
-	golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744
-	golang.org/x/text v0.3.6
-	howett.net/plist v0.0.0-20201203080718-1454fab16a06
-	modernc.org/sqlite v1.10.6
+	github.com/schollz/progressbar/v3 v3.18.0
+	golang.org/x/crypto v0.37.0
+	golang.org/x/sys v0.32.0
+	golang.org/x/text v0.24.0
+	howett.net/plist v1.0.1
+	modernc.org/sqlite v1.37.0
+)
+
+require (
+	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
+	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
+	golang.org/x/term v0.31.0 // indirect
+	modernc.org/libc v1.63.0 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
+	modernc.org/memory v1.10.0 // indirect
 )
