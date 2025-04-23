@@ -24,11 +24,7 @@ repos:
         additional_dependencies:
         - mdformat-gfm
 
--   repo: local
+-   repo: https://github.com/golangci/golangci-lint
+    rev: v2.1.2
     hooks:
-    -   id: gofmt
-        name: gofmt
-        stages: [commit]
-        language: system
-        entry: go fmt
-        types: [go]
+    -   id: golangci-lint-fmt
