@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 )
 
 type User struct {
@@ -49,7 +51,7 @@ func getTokenExpiration(token string) string {
 
 	tm := time.Unix(expirationTime/1000, 0)
 
-	return tm.String()
+	return fmt.Sprintf("%s [%s]", tm.String(), humanize.Time(tm))
 }
 
 func failIfNotAccessible(path string, pathDescription string) {

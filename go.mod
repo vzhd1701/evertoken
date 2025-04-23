@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/danieljoos/wincred v1.2.2
+	github.com/dustin/go-humanize v1.0.1
 	github.com/integrii/flaggy v1.5.2
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/schollz/progressbar/v3 v3.18.0
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
