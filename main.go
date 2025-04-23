@@ -18,11 +18,13 @@ func init() {
 }
 
 func main() {
-	var exbPath, exbPass string
+	var newPath, exbPath, exbPass string
 	exbBruteStart := int64(-1)
 
 	subcmdNew := flaggy.NewSubcommand("new")
 	subcmdNew.Description = "Extract token from new Evernote app."
+
+	subcmdNew.String(&newPath, "u", "user-dir", "Path to Evernote user config directory. (Optional, use only if you changed it)")
 
 	subcmdLegacy := flaggy.NewSubcommand("legacy")
 	subcmdLegacy.Description = "Extract token from legacy Evernote app."
@@ -44,7 +46,7 @@ func main() {
 
 	switch {
 	case subcmdNew.Used:
-		Users = newGetUsers()
+		Users = newGetUsers(newPath)
 	case subcmdLegacy.Used:
 		Users = legacyGetUsers()
 	case subcmdLegacyEXB.Used:

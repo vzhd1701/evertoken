@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -13,10 +13,24 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func newGetUsers() (users []User) {
-	confDir := configdir.LocalConfig("Evernote")
+func getEvernoteDir(customPath string) string {
+	var userDir string
 
-	for _, user := range newListUsers() {
+	if customPath == "" {
+		userDir = configdir.LocalConfig("Evernote")
+	} else {
+		userDir = customPath
+	}
+
+	failIfNotAccessible(userDir, "Evernote user config directory")
+
+	return userDir
+}
+
+func newGetUsers(newPath string) (users []User) {
+	confDir := getEvernoteDir(newPath)
+
+	for _, user := range newListUsers(confDir) {
 		storagePath := filepath.Join(confDir, "secure-storage", "authtoken_user_"+user.ID)
 
 		encData, iv := newGetSecureStorageData(storagePath)
@@ -39,9 +53,10 @@ func newGetUsers() (users []User) {
 	return
 }
 
-func newListUsers() (users []UserData) {
-	confDir := configdir.LocalConfig("Evernote")
+func newListUsers(confDir string) (users []UserData) {
 	dbFile := filepath.Join(confDir, "conduit-storage", "https%3A%2F%2Fwww.evernote.com", "_ConduitMultiUserDB.sql")
+
+	failIfNotAccessible(dbFile, "user database file")
 
 	db, err := sql.Open("sqlite", dbFile)
 	panicFail(err)
@@ -76,7 +91,9 @@ func newListUsers() (users []UserData) {
 }
 
 func newGetSecureStorageData(storagePath string) ([]byte, []byte) {
-	dat, err := ioutil.ReadFile(storagePath)
+	failIfNotAccessible(storagePath, "user secure storage file")
+
+	dat, err := os.ReadFile(storagePath)
 	panicFail(err)
 
 	var storageData map[string]interface{}

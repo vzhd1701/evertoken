@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -48,4 +50,20 @@ func getTokenExpiration(token string) string {
 	tm := time.Unix(expirationTime/1000, 0)
 
 	return tm.String()
+}
+
+func failIfNotAccessible(path string, pathDescription string) {
+	_, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		errorMessage := fmt.Sprintf("%s '%s' does not exist", pathDescription, path)
+		err = errors.New(errorMessage)
+		expectedFail(err)
+	} else if os.IsPermission(err) {
+		errorMessage := fmt.Sprintf("cannot access %s '%s', try running as admin", pathDescription, path)
+		err = errors.New(errorMessage)
+		expectedFail(err)
+	} else if err != nil {
+		panicFail(err)
+	}
 }
