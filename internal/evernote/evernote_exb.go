@@ -1,4 +1,4 @@
-package main
+package evernote
 
 import (
 	"bytes"
@@ -13,6 +13,9 @@ import (
 	"strings"
 
 	"github.com/schollz/progressbar/v3"
+	"github.com/vzhd1701/evertoken/internal/myerrors"
+	"github.com/vzhd1701/evertoken/internal/platform"
+	"github.com/vzhd1701/evertoken/internal/types"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -30,31 +33,31 @@ var userLocations = map[string][4]int{
 	"enscript_china": {471, 372, 4, 8},
 }
 
-func exbGetUser(dbFile string, password string, bruteForceStart int64) User {
+func EXBGetUser(dbFile string, password string, bruteForceStart int64) types.User {
 	if _, err := os.Stat(dbFile); errors.Is(err, os.ErrNotExist) {
 		err = errors.New("database file does not exist")
-		expectedFail(err)
+		myerrors.ExpectedFail(err)
 	}
 
 	db, err := sql.Open("sqlite", dbFile)
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	token, err := exbGetToken(db, password, bruteForceStart)
-	expectedFail(err)
+	myerrors.ExpectedFail(err)
 
 	user, err := exbGetUserData(db)
-	expectedFail(err)
+	myerrors.ExpectedFail(err)
 
-	return User{
-		path:     dbFile,
-		id:       user.ID,
-		username: user.Username,
-		email:    user.Email,
-		token:    token,
+	return types.User{
+		Path:     dbFile,
+		ID:       user.ID,
+		UserName: user.Username,
+		Email:    user.Email,
+		Token:    token,
 	}
 }
 
-func exbGetUserData(db *sql.DB) (user UserData, err error) {
+func exbGetUserData(db *sql.DB) (user types.UserData, err error) {
 	userData, err := exbGetKnownData(db, userLocations)
 
 	if err != nil {
@@ -96,7 +99,7 @@ func exbGetToken(db *sql.DB, password string, bruteForceStart int64) (token stri
 
 	if bruteForceStart != -1 {
 		password, err = exbBruteForcePass(tokenData, bruteForceStart)
-		expectedFail(err)
+		myerrors.ExpectedFail(err)
 
 		fmt.Println("\nPassword is:", password)
 	}
@@ -108,7 +111,7 @@ func exbGetToken(db *sql.DB, password string, bruteForceStart int64) (token stri
 
 func exbBlindSearchToken(db *sql.DB) (data []byte, err error) {
 	for _, rowData := range exbBlindDataQuery(db) {
-		if len(rowData)%16 == 0 && len(rowData) > 200 && len(rowData) < 300 && Shannon(rowData[:200]) >= 1000 {
+		if len(rowData)%16 == 0 && len(rowData) > 200 && len(rowData) < 300 && platform.Shannon(rowData[:200]) >= 1000 {
 			data = rowData
 			return
 		}
@@ -121,18 +124,18 @@ func exbBlindSearchToken(db *sql.DB) (data []byte, err error) {
 
 func exbBlindDataQuery(db *sql.DB) (datas [][]byte) {
 	rows, err := db.Query("SELECT data FROM attrs")
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
-		panicFail(err)
+		myerrors.PanicFail(err)
 	}(rows)
 
 	for rows.Next() {
 		var data []byte
 
 		err = rows.Scan(&data)
-		panicFail(err)
+		myerrors.PanicFail(err)
 
 		datas = append(datas, data)
 	}
@@ -166,7 +169,7 @@ func exbQueryData(db *sql.DB, location [4]int) (data []byte, err error) {
 	return
 }
 
-func exbReadUserData(data []byte) (user UserData) {
+func exbReadUserData(data []byte) (user types.UserData) {
 	buf := bytes.NewBuffer(data)
 
 	buf.Next(3)
@@ -190,7 +193,7 @@ func exbDecryptToken(data []byte, password string) (token string, err error) {
 	cleanData := exbUnscrambleTokenData(data)
 
 	if password == "" {
-		password = getDiskSerial()
+		password = platform.GetDiskSerial()
 	}
 
 	key := exbMakeKey(password)
@@ -198,7 +201,7 @@ func exbDecryptToken(data []byte, password string) (token string, err error) {
 	iv := cleanData[:16]
 	ciphertext := cleanData[16:]
 
-	token = string(aesDecrypt(ciphertext, key, iv))
+	token = string(platform.AESDecrypt(ciphertext, key, iv))
 
 	if !strings.HasPrefix(token, "S=s") {
 		err = errors.New("failed to decrypt token data")
@@ -218,7 +221,7 @@ func exbUnscrambleTokenData(obfData []byte) []byte {
 	}
 
 	data, err := hex.DecodeString(string(deobfData))
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	return data
 }
@@ -240,7 +243,7 @@ func exbBruteWorker(ciphertext []byte, iv []byte, jobs <-chan int64, results cha
 
 		key := exbMakeKey(password)
 
-		tokenBytes := aesDecrypt(ciphertext, key, iv)
+		tokenBytes := platform.AESDecrypt(ciphertext, key, iv)
 
 		if !bytes.HasPrefix(tokenBytes, tokenPrefix) {
 			results <- ""
@@ -258,7 +261,7 @@ func exbBruteForcePass(encData []byte, start int64) (password string, err error)
 	bar := progressbar.Default(numJobsTotal)
 
 	err = bar.Add64(start)
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	cleanData := exbUnscrambleTokenData(encData)
 
@@ -288,7 +291,7 @@ func exbBruteForcePass(encData []byte, start int64) (password string, err error)
 			resPassword := <-results
 
 			err := bar.Add64(1)
-			panicFail(err)
+			myerrors.PanicFail(err)
 
 			if resPassword != "" {
 				password = resPassword

@@ -1,13 +1,16 @@
-package main
+package evernote
 
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/vzhd1701/evertoken/internal/myerrors"
+	"github.com/vzhd1701/evertoken/internal/types"
 )
 
-func legacyGetUsers() (Users []User) {
+func LegacyGetUsers() (Users []types.User) {
 	confDir, err := os.UserHomeDir()
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	databasesPatterns := []string{
 		filepath.Join(confDir, "Yinxiang Biji", "Databases", "*.exb"),
@@ -16,10 +19,10 @@ func legacyGetUsers() (Users []User) {
 
 	for _, dbPattern := range databasesPatterns {
 		dbFiles, err := filepath.Glob(dbPattern)
-		panicFail(err)
+		myerrors.PanicFail(err)
 
 		for _, f := range dbFiles {
-			Users = append(Users, exbGetUser(f, "", -1))
+			Users = append(Users, EXBGetUser(f, "", -1))
 		}
 	}
 

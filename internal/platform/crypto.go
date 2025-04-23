@@ -1,24 +1,26 @@
-package main
+package platform
 
 import (
 	"crypto/aes"
 	"crypto/cipher"
 	"fmt"
 	"math"
+
+	"github.com/vzhd1701/evertoken/internal/myerrors"
 )
 
-func aesDecrypt(ciphertext []byte, key []byte, iv []byte) (plaintext []byte) {
+func AESDecrypt(ciphertext []byte, key []byte, iv []byte) (plaintext []byte) {
 	block, err := aes.NewCipher(key)
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	if len(ciphertext) < aes.BlockSize {
 		err = fmt.Errorf("ciphertext too short")
-		panicFail(err)
+		myerrors.PanicFail(err)
 	}
 
 	if len(ciphertext)%aes.BlockSize != 0 {
 		err = fmt.Errorf("ciphertext has wrong size")
-		panicFail(err)
+		myerrors.PanicFail(err)
 	}
 
 	deciphered := make([]byte, len(ciphertext))

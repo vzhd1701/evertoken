@@ -1,4 +1,4 @@
-package main
+package platform
 
 import (
 	"errors"
@@ -6,10 +6,11 @@ import (
 	"unsafe"
 
 	"github.com/danieljoos/wincred"
+	"github.com/vzhd1701/evertoken/internal/myerrors"
 	"golang.org/x/sys/windows"
 )
 
-func getDiskSerial() string {
+func GetDiskSerial() string {
 	mainDrive := "C"
 
 	lpVolumeNameBuffer := make([]uint16, 256)
@@ -31,12 +32,12 @@ func getDiskSerial() string {
 		&lpFileSystemFlags,
 		lpFileSystemNameBufferPtr,
 		uint32(len(lpFileSystemNameBuffer)))
-	panicFail(err)
+	myerrors.PanicFail(err)
 
 	return strconv.Itoa(int(lpVolumeSerialNumber))
 }
 
-func getSecureStorageData(service string, accountID string) []byte {
+func GetSecureStorageData(service string, accountID string) []byte {
 	serviceURI := service + "/" + accountID
 
 	cred, err := wincred.GetGenericCredential(serviceURI)
@@ -45,9 +46,9 @@ func getSecureStorageData(service string, accountID string) []byte {
 		case "Element not found.":
 			err = errors.New("entry not found in secure storage")
 		default:
-			panicFail(err)
+			myerrors.PanicFail(err)
 		}
-		expectedFail(err)
+		myerrors.ExpectedFail(err)
 	}
 
 	return cred.CredentialBlob

@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/integrii/flaggy"
+	"github.com/vzhd1701/evertoken/internal/evernote"
+	"github.com/vzhd1701/evertoken/internal/types"
 )
 
 var version = "0.0.1"
@@ -42,15 +43,15 @@ func main() {
 
 	flaggy.Parse()
 
-	var Users []User
+	var Users []types.User
 
 	switch {
 	case subcmdNew.Used:
-		Users = newGetUsers(newPath)
+		Users = evernote.NewGetUsers(newPath)
 	case subcmdLegacy.Used:
-		Users = legacyGetUsers()
+		Users = evernote.LegacyGetUsers()
 	case subcmdLegacyEXB.Used:
-		Users = append(Users, exbGetUser(exbPath, exbPass, exbBruteStart))
+		Users = append(Users, evernote.EXBGetUser(exbPath, exbPass, exbBruteStart))
 	default:
 		flaggy.ShowHelpAndExit("")
 	}
@@ -61,18 +62,6 @@ func main() {
 	}
 
 	for _, user := range Users {
-		printUser(user)
-	}
-}
-
-func panicFail(err error) {
-	if err != nil {
-		log.Panic(fmt.Errorf("[ERROR] %w", err))
-	}
-}
-
-func expectedFail(err error) {
-	if err != nil {
-		log.Fatal(fmt.Errorf("[ERROR] %w", err))
+		user.PrintDetails()
 	}
 }

@@ -1,16 +1,18 @@
-package main
+package platform
 
 import (
 	"errors"
 	"os/exec"
+
+	"github.com/vzhd1701/evertoken/internal/myerrors"
 )
 
 // Stub for darwin
-func getDiskSerial() string {
+func GetDiskSerial() string {
 	return ""
 }
 
-func getSecureStorageData(service string, accountID string) (keyDataBin []byte) {
+func GetSecureStorageData(service string, accountID string) (keyDataBin []byte) {
 	var err error
 
 	if accountID == "" {
@@ -33,9 +35,9 @@ func getSecureStorageData(service string, accountID string) (keyDataBin []byte) 
 		case "exit status 128":
 			err = errors.New("secure storage access denied")
 		default:
-			panicFail(err)
+			myerrors.PanicFail(err)
 		}
-		expectedFail(err)
+		myerrors.ExpectedFail(err)
 	}
 
 	return keyDataBin
