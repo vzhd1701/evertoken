@@ -20,17 +20,20 @@ func init() {
 
 func main() {
 	var newPath, newSecurePath, exbPath, exbPass string
+	var showRaw bool
 	exbBruteStart := int64(-1)
 
 	subcmdNew := flaggy.NewSubcommand("new")
 	subcmdNew.Description = "Extract token from modern Evernote app."
 
 	subcmdNew.String(&newPath, "u", "user-dir", "Path to Evernote user config directory. (Optional, use only if you moved it)")
+	subcmdNew.Bool(&showRaw, "r", "show-raw", "Show raw decrypted secure storage data.")
 
 	subcmdNewSS := flaggy.NewSubcommand("new-ss")
 	subcmdNewSS.Description = "Extract token directly from Evernote's secure storage file authtoken_user_<userID>."
 
 	subcmdNewSS.AddPositionalValue(&newSecurePath, "ss-file", 1, true, "Path to Evernote secure storage file authtoken_user_<userID>.")
+	subcmdNewSS.Bool(&showRaw, "r", "show-raw", "Show raw decrypted secure storage data.")
 
 	subcmdLegacy := flaggy.NewSubcommand("legacy")
 	subcmdLegacy.Description = "Extract token from legacy Evernote app."
@@ -53,9 +56,9 @@ func main() {
 
 	switch {
 	case subcmdNew.Used:
-		Users = evernote.NewGetUsers(newPath)
+		Users = evernote.NewGetUsers(newPath, showRaw)
 	case subcmdNewSS.Used:
-		Users = evernote.NewGetSecureUsers(newSecurePath)
+		Users = evernote.NewGetSecureUsers(newSecurePath, showRaw)
 	case subcmdLegacy.Used:
 		Users = evernote.LegacyGetUsers()
 	case subcmdLegacyEXB.Used:

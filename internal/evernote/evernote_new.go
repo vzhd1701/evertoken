@@ -19,38 +19,52 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func NewGetUsers(newPath string) (users []types.User) {
+func NewGetUsers(newPath string, showRaw bool) (users []types.User) {
 	confDir := getEvernoteDir(newPath)
 
 	for _, user := range newListUsers(confDir) {
 		storagePath := filepath.Join(confDir, "secure-storage", "authtoken_user_"+user.ID)
 
-		token := getTokenFromSecureStorage(storagePath, user.ID)
+		userStoreDataRAW := getDecryptedSecureStorage(storagePath, user.ID)
+		userStoreData := types.ParseRAWUserStoreData(userStoreDataRAW)
 
-		users = append(users, types.User{
-			Path:     storagePath,
-			ID:       user.ID,
-			UserName: user.Username,
-			Email:    user.Email,
-			Token:    token,
-		})
+		user := types.User{
+			Path:          storagePath,
+			ID:            user.ID,
+			UserName:      user.Username,
+			Email:         user.Email,
+			Token:         userStoreData.Token,
+			UserStoreData: &userStoreData,
+		}
+
+		if showRaw {
+			user.UserStoreDataRAW = userStoreDataRAW
+		}
+
+		users = append(users, user)
 	}
 
 	return
 }
 
-func NewGetSecureUsers(newSecurePath string) (users []types.User) {
+func NewGetSecureUsers(newSecurePath string, showRaw bool) (users []types.User) {
 	userID := parseUserID(newSecurePath)
 
-	token := getTokenFromSecureStorage(newSecurePath, userID)
+	userStoreDataRAW := getDecryptedSecureStorage(newSecurePath, userID)
+	userStoreData := types.ParseRAWUserStoreData(userStoreDataRAW)
 
-	users = append(users, types.User{
-		Path:     newSecurePath,
-		ID:       userID,
-		UserName: "",
-		Email:    "",
-		Token:    token,
-	})
+	user := types.User{
+		Path:          newSecurePath,
+		ID:            userID,
+		Token:         userStoreData.Token,
+		UserStoreData: &userStoreData,
+	}
+
+	if showRaw {
+		user.UserStoreDataRAW = userStoreDataRAW
+	}
+
+	users = append(users, user)
 
 	return
 }
@@ -75,14 +89,14 @@ func parseUserID(filePath string) string {
 	return userID
 }
 
-func getTokenFromSecureStorage(storagePath string, userID string) string {
+func getDecryptedSecureStorage(storagePath string, userID string) string {
 	encData, iv := newGetSecureStorageData(storagePath)
 
 	key := newGetSecureStorageKey(userID)
 
 	decryptedData := platform.AESDecrypt(encData, key, iv)
 
-	return newGetToken(decryptedData)
+	return string(decryptedData)
 }
 
 func getEvernoteDir(customPath string) string {
@@ -172,15 +186,4 @@ func newGetSecureStorageKey(userId string) []byte {
 	myerrors.PanicFail(err)
 
 	return key
-}
-
-func newGetToken(storagedataBytes []byte) string {
-	storagedataRaw, err := base64.StdEncoding.DecodeString(string(storagedataBytes))
-	myerrors.PanicFail(err)
-
-	var storageData map[string]interface{}
-	err = json.Unmarshal(storagedataRaw, &storageData)
-	myerrors.PanicFail(err)
-
-	return storageData["t"].(string)
 }
